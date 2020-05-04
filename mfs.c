@@ -35,6 +35,7 @@
 #include <string.h>
 #include <signal.h>
 #include <stdint.h>
+#include <ctype.h>
 
 #define WHITESPACE " \t\n"      // We want to split our command line up into tokens
                                 // so we need to define what delimits our tokens.
@@ -94,6 +95,41 @@ int16_t NextLB(uint32_t sector)
 void fnop()
 {
   printf("Error: File system image must be opened first.\n");
+}
+
+// compare filenames, returns 1 if filenames match, 0 if not
+int compare(char * input, char * IMG_Name)
+{
+  int match = 0;
+
+  char expanded_name[12];
+  memset( expanded_name, ' ', 12 );
+
+  char *token = strtok( input, "." );
+
+  strncpy( expanded_name, token, strlen( token ) );
+
+  token = strtok( NULL, "." );
+
+  if( token )
+  {
+    strncpy( (char*)(expanded_name+8), token, strlen(token ) );
+  }
+
+  expanded_name[11] = '\0';
+
+  int i;
+  for( i = 0; i < 11; i++ )
+  {
+    expanded_name[i] = toupper( expanded_name[i] );
+  }
+
+  if( strncmp( expanded_name, IMG_Name, 11 ) == 0 )
+  {
+    match = 1;
+  }
+
+  return match;
 }
 
 int main()
@@ -206,6 +242,9 @@ int main()
           //Set Cluster Size
           cluster = (BPB_SecPerClus * BPB_BytesPerSec);
 
+          fseek(fp, rootDir, SEEK_SET);
+          fread(&dir[0], 16, sizeof(struct DirectoryEntry), fp);        
+
           fileOpen = 1;
           filename = token[1];
         }
@@ -256,8 +295,6 @@ int main()
     // stat <filename> or <directory name>
     // This command shall print the attributes and starting cluster number of the file or 
     // directory name. If the parameter is a directory name then the size shall be 0.
-    // If the file or directory does not exist then your program shall output 
-    // “Error: File not found”.
     else if(strcmp(token[0], "stat") == 0)
     {
       if(fileOpen==0)
@@ -266,7 +303,33 @@ int main()
       }
       else
       {
-        printf("Attribute\tSize\tStarting Cluster Number\n");
+        int i;
+        int fileFound = 0;
+        for(i = 0; i < 16; i++)
+        {
+
+          char input[12];
+          memset(input, 0, 12);
+          strncpy(input, token[1], 12);
+          char file[12];
+          memset(file, 0, 12);
+          strncpy(file, dir[i].DIR_Name, 12);
+
+          if(compare(input, file))
+          {
+            printf("Attribute\tSize\tStarting Cluster Number\n");
+            printf("%d\t\t%d\t%d\n",
+                  dir[i].DIR_Attr, dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
+            fileFound = 1;
+          }
+        }
+        // If the file or directory does not exist then your program shall output 
+        // “Error: File not found”.
+        if(fileFound == 0)
+        {
+          printf("Error: File not found\n");
+        }
+
       }
     }
 
@@ -281,7 +344,12 @@ int main()
       }
       else
       {
-        printf("Error: cd not yet implemented\n");
+        // input is "cd" go to root
+        if(token[1] == NULL)
+        {
+         fseek(fp, rootDir, SEEK_SET);
+         fread(&dir[0], 16, sizeof(struct DirectoryEntry), fp);
+        }
       }
     }
 
@@ -296,9 +364,6 @@ int main()
       }
       else
       {
-        fseek(fp, rootDir, SEEK_SET);
-        fread(&dir[0], 16, sizeof(struct DirectoryEntry), fp);
-        
         int i;
         
         for(i = 0; i < 16; i++)
