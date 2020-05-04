@@ -197,11 +197,16 @@ int main()
       else
       {
         // print hexadecimal and decimal values
-        printf("BPB_BytesPerSec: 0x%x\t%d\n", bps, bps);
-        printf("BPB_SecPerClus:  0x%x\t%d\n", spc, spc);
-        printf("BPB_RsvdSecCnt:  0x%x\t%d\n", rsc, rsc);
-        printf("BPB_NumFATS:     0x%x\t%d\n", nf, nf);
-        printf("BPB_FATSz32:     0x%x\t%d\n", fz32, fz32);
+        printf("BPB_BytesPerSec : %x\n", bps);
+        printf("BPB_BytesPerSec : %d\n\n", bps);
+        printf("BPB_SecPerClus : %x\n", spc);
+        printf("BPB_SecPerClus : %d\n\n", spc);
+        printf("BPB_RsvdSecCnt : %x\n", rsc);
+        printf("BPB_RsvdSecCnt : %d\n\n", rsc);
+        printf("BPB_NumFATS : %x\n", nf);
+        printf("BPB_NumFATS : %d\n\n", nf);
+        printf("BPB_FATSz32 : %x\n", fz32);
+        printf("BPB_FATSz32 : %d\n\n", fz32);
       }
     }
 
