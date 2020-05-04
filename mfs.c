@@ -296,7 +296,19 @@ int main()
       }
       else
       {
-        printf("Error: ls not yet implemented\n");
+        fseek(fp, rootDir, SEEK_SET);
+        fread(&dir[0], 16, sizeof(struct DirectoryEntry), fp);
+        
+        int i;
+        
+        for(i = 0; i < 16; i++)
+        {
+          // print files and subdirectories which are not deleted
+          if(dir[i].DIR_Name[0] != (char)0xe5 && (dir[i].DIR_Attr == 0x01 || dir[i].DIR_Attr == 0x10 || dir[i].DIR_Attr == 0x20))
+          {
+            printf("%.11s\n", dir[i].DIR_Name);
+          }
+        }
       }
     }
 
