@@ -44,11 +44,21 @@
 
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
 
+// dont want to repeatedly type this
+void fnop()
+{
+  printf("Error: File system image must be opened first.\n");
+}
+
 int main()
 {
 
   FILE * fp;
   int fileOpen = 0;
+
+  // info variables
+  int bps, spc, rsc, nf, fz32;
+
   char * filename;
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
 
@@ -109,10 +119,10 @@ int main()
     {
       exit(0);  
     }
-    // handle "open"
+    // open "filename"
+    // Open a fat32 image
     else if(strcmp(token[0], "open") == 0)
     {
-
       if(fileOpen)
       {
         printf("Error: File system image already open.\n");
@@ -127,12 +137,30 @@ int main()
         }
         else
         {
+          // get info values
+          // BPB_BytesPerSec
+          fseek(fp, 11, SEEK_SET);
+          fread(&bps, 2, 1, fp);
+          // BPB_SecPerClus
+          fseek(fp, 13, SEEK_SET);
+          fread(&spc, 1, 1, fp);
+          // BPB_RsvdSecCnt
+          fseek(fp, 14, SEEK_SET);
+          fread(&rsc, 2, 1, fp);
+          // BPB_NumFATS
+          fseek(fp, 16, SEEK_SET);
+          fread(&nf, 1, 1, fp);
+          // BPB_FATSz32
+          fseek(fp, 36, SEEK_SET);
+          fread(&fz32, 4, 1, fp);
+
           fileOpen = 1;
           filename = token[1];
         }
       }
     }
-    // handle "close"
+    // close
+    // Close the fat 32 image.
     else if(strcmp(token[0], "close") == 0)
     {
       if(fileOpen == 0)
@@ -145,7 +173,25 @@ int main()
         fileOpen = 0;
         filename = NULL;
       }
-      
+    }
+    // info
+    // Prints out information about file system in both hexadecimal and base 10
+    // BPB_BytesPerSec, BPB_SecPerClus, BPB_RsvdSecCnt, BPB_NumFATS, BPB_FATSz32
+    else if(strcmp(token[0], "info") == 0)
+    {
+      if(fileOpen==0)
+      {
+        fnop();
+      }
+      else
+      {
+        // print hexadecimal and decimal values
+        printf("BPB_BytesPerSec: 0x%x\t%d\n", bps, bps);
+        printf("BPB_SecPerClus:  0x%x\t%d\n", spc, spc);
+        printf("BPB_RsvdSecCnt:  0x%x\t%d\n", rsc, rsc);
+        printf("BPB_NumFATS:     0x%x\t%d\n", nf, nf);
+        printf("BPB_FATSz32:     0x%x\t%d\n", fz32, fz32);
+      }
     }
 
 
