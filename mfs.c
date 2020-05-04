@@ -58,6 +58,9 @@ int main()
 
   // info variables
   int bps, spc, rsc, nf, fz32;
+  // Root Directory and Cluster Size
+  int rootDir, cluster;
+
 
   char * filename;
   char * cmd_str = (char*) malloc( MAX_COMMAND_SIZE );
@@ -119,7 +122,8 @@ int main()
     {
       exit(0);  
     }
-    // open "filename"
+
+    // open <filename>
     // Open a fat32 image
     else if(strcmp(token[0], "open") == 0)
     {
@@ -154,11 +158,17 @@ int main()
           fseek(fp, 36, SEEK_SET);
           fread(&fz32, 4, 1, fp);
 
+          // Set the address of the root directory / first cluster
+          rootDir = (nf * fz32 * bps) + (rsc * bps);
+          //Set Cluster Size
+          cluster = (spc * bps);
+
           fileOpen = 1;
           filename = token[1];
         }
       }
     }
+
     // close
     // Close the fat 32 image.
     else if(strcmp(token[0], "close") == 0)
@@ -174,6 +184,7 @@ int main()
         filename = NULL;
       }
     }
+
     // info
     // Prints out information about file system in both hexadecimal and base 10
     // BPB_BytesPerSec, BPB_SecPerClus, BPB_RsvdSecCnt, BPB_NumFATS, BPB_FATSz32
@@ -194,6 +205,88 @@ int main()
       }
     }
 
+    // stat <filename> or <directory name>
+    // This command shall print the attributes and starting cluster number of the file or 
+    // directory name. If the parameter is a directory name then the size shall be 0.
+    // If the file or directory does not exist then your program shall output “Error: File not found”.
+    else if(strcmp(token[0], "stat") == 0)
+    {
+      if(fileOpen==0)
+      {
+        fnop();
+      }
+      else
+      {
+        printf("Error: stat not yet implemented\n");
+      }
+    }
+
+    // cd <directory>
+    // This command shall change the current working directory to the given directory.
+    // Your program shall support relative paths, e.g cd ../name and absolute paths.
+    else if(strcmp(token[0], "cd") == 0)
+    {
+      if(fileOpen==0)
+      {
+        fnop();
+      }
+      else
+      {
+        printf("Error: cd not yet implemented\n");
+      }
+    }
+
+    // ls
+    // Lists the directory contents. Your program shall support listing “.” and
+    // “..” . Your program shall not list deleted files or system volume names.
+    else if(strcmp(token[0], "ls") == 0)
+    {
+      if(fileOpen==0)
+      {
+        fnop();
+      }
+      else
+      {
+        printf("Error: ls not yet implemented\n");
+      }
+    }
+
+    // get <filename>
+    // This command shall retrieve the file from the FAT 32 image and place
+    // it in your current working directory. If the file or directory does 
+    // not exist then your program shall output “Error: File not found”.
+    else if(strcmp(token[0], "get") == 0)
+    {
+      if(fileOpen==0)
+      {
+        fnop();
+      }
+      else
+      {
+        printf("Error: get not yet implemented\n");
+      }
+    }
+
+    // read <filename> <position> <number of bytes>
+    // Reads from the given file at the position, in bytes, specified 
+    // by the position parameter and output the number of bytes specified
+    else if(strcmp(token[0], "read") == 0)
+    {
+      if(fileOpen==0)
+      {
+        fnop();
+      }
+      else
+      {
+        printf("Error: read not yet implemented\n");
+      }
+    }
+
+    // invalid command entered
+    else
+    {
+      printf("Error: Command %s not found.\n", token[0]);
+    }
 
     free( working_root );
 
