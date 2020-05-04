@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <stdint.h>
 
 #define WHITESPACE " \t\n"      // We want to split our command line up into tokens
                                 // so we need to define what delimits our tokens.
@@ -43,6 +44,51 @@
 #define MAX_COMMAND_SIZE 255    // The maximum command-line size
 
 #define MAX_NUM_ARGUMENTS 5     // Mav shell only supports five arguments
+
+FILE * fp;
+
+char    BS_OEMName[8];
+int16_t BPB_BytesPerSec;
+int8_t  BPB_SecPerClus;
+int16_t BPB_RsvdSecCnt;
+int8_t  BPB_NumFATs;
+int16_t BPB_RootEntCnt;
+char    BS_VolLab[11];
+int32_t BPB_FATSz32;
+int32_t BPB_RootClus;
+
+int32_t RootDirSectors = 0;
+int32_t FirstDataSector = 0;
+int32_t FirstSectorofCluster = 0;
+
+
+struct __attribute__((__packed__)) DirectoryEntry 
+{
+  char      DIR_Name[11];
+  uint8_t   DIR_Attr;
+  uint8_t   Unused1[8];
+  uint16_t  DIR_FirstClusterHigh;
+  uint8_t   Unused2[4];
+  uint16_t  DIR_FirstClusterLow;
+  uint32_t  DIR_FileSize;
+};
+
+struct DirectoryEntry dir[16];
+
+int LBAToOffset(int32_t sector)
+{
+  return ((sector-2)*BPB_BytesPerSec)+(BPB_BytesPerSec*BPB_RsvdSecCnt)
+          +(BPB_NumFATs*BPB_FATSz32*BPB_BytesPerSec);
+}
+
+int16_t NextLB(uint32_t sector)
+{
+  uint32_t FATAddress = (BPB_BytesPerSec*BPB_RsvdSecCnt)+(sector*4);
+  int16_t val;
+  fseek(fp, FATAddress, SEEK_SET);
+  fread(&val, 2, 1, fp);
+  return val;
+}
 
 // dont want to repeatedly type this
 void fnop()
@@ -56,8 +102,6 @@ int main()
   FILE * fp;
   int fileOpen = 0;
 
-  // info variables
-  int bps, spc, rsc, nf, fz32;
   // Root Directory and Cluster Size
   int rootDir, cluster;
 
@@ -146,26 +190,21 @@ int main()
         else
         {
           // get info values
-          // BPB_BytesPerSec
           fseek(fp, 11, SEEK_SET);
-          fread(&bps, 2, 1, fp);
-          // BPB_SecPerClus
+          fread(&BPB_BytesPerSec, 2, 1, fp);
           fseek(fp, 13, SEEK_SET);
-          fread(&spc, 1, 1, fp);
-          // BPB_RsvdSecCnt
+          fread(&BPB_SecPerClus, 1, 1, fp);
           fseek(fp, 14, SEEK_SET);
-          fread(&rsc, 2, 1, fp);
-          // BPB_NumFATS
+          fread(&BPB_RsvdSecCnt, 2, 1, fp);
           fseek(fp, 16, SEEK_SET);
-          fread(&nf, 1, 1, fp);
-          // BPB_FATSz32
+          fread(&BPB_NumFATs, 1, 1, fp);
           fseek(fp, 36, SEEK_SET);
-          fread(&fz32, 4, 1, fp);
+          fread(&BPB_FATSz32, 4, 1, fp);
 
           // Set the address of the root directory / first cluster
-          rootDir = (nf * fz32 * bps) + (rsc * bps);
+          rootDir = (BPB_NumFATs*BPB_FATSz32*BPB_BytesPerSec) + (BPB_RsvdSecCnt*BPB_BytesPerSec);
           //Set Cluster Size
-          cluster = (spc * bps);
+          cluster = (BPB_SecPerClus * BPB_BytesPerSec);
 
           fileOpen = 1;
           filename = token[1];
@@ -201,23 +240,24 @@ int main()
       else
       {
         // print hexadecimal and decimal values
-        printf("BPB_BytesPerSec : %d\n", bps);
-        printf("BPB_BytesPerSec : %x\n\n", bps);
-        printf("BPB_SecPerClus : %d\n", spc);
-        printf("BPB_SecPerClus : %x\n\n", spc);
-        printf("BPB_RsvdSecCnt : %d\n", rsc);
-        printf("BPB_RsvdSecCnt : %x\n\n", rsc);
-        printf("BPB_NumFATS : %d\n", nf);
-        printf("BPB_NumFATS : %x\n\n", nf);
-        printf("BPB_FATSz32 : %d\n", fz32);
-        printf("BPB_FATSz32 : %x\n\n", fz32);
+        printf("BPB_BytesPerSec : %d\n", BPB_BytesPerSec);
+        printf("BPB_BytesPerSec : %x\n\n", BPB_BytesPerSec);
+        printf("BPB_SecPerClus : %d\n", BPB_SecPerClus);
+        printf("BPB_SecPerClus : %x\n\n", BPB_SecPerClus);
+        printf("BPB_RsvdSecCnt : %d\n", BPB_RsvdSecCnt);
+        printf("BPB_RsvdSecCnt : %x\n\n", BPB_RsvdSecCnt);
+        printf("BPB_NumFATS : %d\n", BPB_NumFATs);
+        printf("BPB_NumFATS : %x\n\n", BPB_NumFATs);
+        printf("BPB_FATSz32 : %d\n", BPB_FATSz32);
+        printf("BPB_FATSz32 : %x\n\n", BPB_FATSz32);
       }
     }
 
     // stat <filename> or <directory name>
     // This command shall print the attributes and starting cluster number of the file or 
     // directory name. If the parameter is a directory name then the size shall be 0.
-    // If the file or directory does not exist then your program shall output “Error: File not found”.
+    // If the file or directory does not exist then your program shall output 
+    // “Error: File not found”.
     else if(strcmp(token[0], "stat") == 0)
     {
       if(fileOpen==0)
@@ -226,7 +266,7 @@ int main()
       }
       else
       {
-        printf("Error: stat not yet implemented\n");
+        printf("Attribute\tSize\tStarting Cluster Number\n");
       }
     }
 
