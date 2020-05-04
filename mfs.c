@@ -120,6 +120,10 @@ int main()
     // "exit" or "quit" terminates program with status 0
     else if(strcmp(token[0], "exit") == 0 || strcmp(token[0], "quit") == 0)
     {
+      if(fileOpen==1)
+      {
+        fclose(fp);
+      }
       exit(0);  
     }
 
@@ -197,16 +201,16 @@ int main()
       else
       {
         // print hexadecimal and decimal values
-        printf("BPB_BytesPerSec : %x\n", bps);
-        printf("BPB_BytesPerSec : %d\n\n", bps);
-        printf("BPB_SecPerClus : %x\n", spc);
-        printf("BPB_SecPerClus : %d\n\n", spc);
-        printf("BPB_RsvdSecCnt : %x\n", rsc);
-        printf("BPB_RsvdSecCnt : %d\n\n", rsc);
-        printf("BPB_NumFATS : %x\n", nf);
-        printf("BPB_NumFATS : %d\n\n", nf);
-        printf("BPB_FATSz32 : %x\n", fz32);
-        printf("BPB_FATSz32 : %d\n\n", fz32);
+        printf("BPB_BytesPerSec : %d\n", bps);
+        printf("BPB_BytesPerSec : %x\n\n", bps);
+        printf("BPB_SecPerClus : %d\n", spc);
+        printf("BPB_SecPerClus : %x\n\n", spc);
+        printf("BPB_RsvdSecCnt : %d\n", rsc);
+        printf("BPB_RsvdSecCnt : %x\n\n", rsc);
+        printf("BPB_NumFATS : %d\n", nf);
+        printf("BPB_NumFATS : %x\n\n", nf);
+        printf("BPB_FATSz32 : %d\n", fz32);
+        printf("BPB_FATSz32 : %x\n\n", fz32);
       }
     }
 
