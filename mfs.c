@@ -305,22 +305,25 @@ int main()
       {
         int i;
         int fileFound = 0;
-        for(i = 0; i < 16; i++)
+        if(token[1] != NULL)
         {
-
-          char input[12];
-          memset(input, 0, 12);
-          strncpy(input, token[1], 12);
-          char file[12];
-          memset(file, 0, 12);
-          strncpy(file, dir[i].DIR_Name, 12);
-
-          if(compare(input, file))
+          for(i = 0; i < 16; i++)
           {
-            printf("Attribute\tSize\tStarting Cluster Number\n");
-            printf("%d\t\t%d\t%d\n",
-                  dir[i].DIR_Attr, dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
-            fileFound = 1;
+
+            char input[12];
+            memset(input, 0, 12);
+            strncpy(input, token[1], 12);
+            char file[12];
+            memset(file, 0, 12);
+            strncpy(file, dir[i].DIR_Name, 12);
+
+            if(compare(input, file))
+            {
+              printf("Attribute\tSize\tStarting Cluster Number\n");
+              printf("%d\t\t%d\t%d\n",
+                    dir[i].DIR_Attr, dir[i].DIR_FileSize, dir[i].DIR_FirstClusterLow);
+              fileFound = 1;
+            }
           }
         }
         // If the file or directory does not exist then your program shall output 
